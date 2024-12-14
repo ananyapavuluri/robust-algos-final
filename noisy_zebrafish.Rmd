@@ -1,0 +1,66 @@
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(Seurat)
+library(dplyr)
+
+```
+
+```{r}
+# Reading in the expression file
+
+expr <- read.csv("count_data-hvg.csv", header=TRUE)
+
+```
+
+```{r}
+# Plot the "before noise" UMAP
+
+library(umap)
+library(ggplot2)
+
+expr <- data.matrix(expr)
+metadata <- read.csv("meta_data.csv")
+
+umap_results <- umap(expr, n_neighbors = 15, min_dist = 0.1, metric = "cosine")
+
+umap_df <- as.data.frame(umap_results)
+colnames(umap_df) <- c("UMAP1", "UMAP2")
+
+umap_df$pseudotime <- metadata$age
+
+ggplot(umap_df, aes(x = UMAP1, y = UMAP2, color=pseudotime)) +
+  geom_point() +
+  scale_color_viridis_c() +
+  theme_minimal() +
+  labs(title = "UMAP Before Noise", color = "Pseudotime")
+
+```
+
+```{r}
+# Ensure expr is a numeric matrix
+expr_clean <- data.matrix(expr)  # Exclude row and column names
+
+# Define dropout rate
+dropout_rate <- 0.3
+
+# Generate a random dropout mask with values between 0 and 1
+dropout_mask <- matrix(runif(length(expr_clean)), nrow = nrow(expr_clean), ncol = ncol(expr_clean))
+
+# Apply dropout based on the dropout rate
+# If the random value is less than the dropout rate, the gene is "dropped out"
+expr_with_dropout <- expr_clean  # Start with a copy of the numeric matrix
+expr_with_dropout[dropout_mask < dropout_rate] <- 0
+
+# Reassign row and column names back to the matrix
+rownames(expr_with_dropout) <- rownames(expr)
+colnames(expr_with_dropout) <- colnames(expr)
+
+```
+
+```{r}
+
+
+```
